@@ -15,9 +15,9 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         "/m": Server_Services_MixIn.private_message(),
         "/b": Server_Services_MixIn.broadcast_message(),
         "/q": lambda Server: Server.remove_client_from_the_list(),
-        "netcat": Network_Services_MixIn.netcat(),
-        "dns": Network_Services_MixIn.dns(),
-        "netscan": Network_Services_MixIn.netscan()
+        "netcat":   Network_Services_MixIn.netcat(),
+        "dns":      Network_Services_MixIn.dns(),
+        "portscan": Network_Services_MixIn.portscan()
         }
 
     def __init__(self):
@@ -45,30 +45,35 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         self.add_client_to_the_list(connection, client_address)
         while True:
             try:
-                message = (connection.recv(1024)).decode()
-                if message in Server.FUNCTION_DICTIONARY: 
-                    result = Server.FUNCTION_DICTIONARY[message]
+                _function, _args = Server.separating_function_from_arguments((connection.recv(1024)).decode())
+                if _function in Server.FUNCTION_DICTIONARY:
+                    _result = Server.FUNCTION_DICTIONARY[_function](_args)
                 else:
-                    result = 'Command not found'
-                Server.send_to_client(connection, result)
+                    _result = 'Command not found'
+                Server.send_to_client(connection, _result)
             except Exception as error:
                 print('ERROR INSIDE THE LOOP')
                 print(error)
                 self.remove_client_from_the_list(self, connection, client_address)
+    
+    def separating_function_from_arguments(_string):
+        _function_key = _string.split(':', 1)[0]
+        try:   _arguments = _string.split(':', 1)[1]
+        except IndexError: _arguments = None
+        return _function_key, _arguments
+
+    def send_to_client(connection, result):
+        connection.sendall(result.encode())
 
     def add_client_to_the_list(self, connection, client_address):
         with self._lock:
             self._clients_list[client_address] = connection
 
-    def remove_client_from_the_list(self, *args):
-        connection     = args[0]
-        client_address = args[1]
+    def remove_client_from_the_list(self, connection, client_address):
         with self._lock:
             connection.close()
             del self._clients_list[client_address]
-    
-    def send_to_client(connection, result):
-        connection.sendall(result.encode())
+
     
 if __name__ == '__main__':
     server = Server()
