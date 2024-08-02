@@ -12,8 +12,8 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         "/f": Server_Services_MixIn.files_on_the_server(),
         "/d": Server_Services_MixIn.send_file_to_client(),
         "/u": Server_Services_MixIn.receive_file_from_client(),
-        "/m": Server_Services_MixIn.private_message(),
-        "/b": Server_Services_MixIn.broadcast_message(),
+        "/m": lambda Server: Server.private_message(),
+        "/b": lambda Server: Server.broadcast_message(),
         "/q": lambda Server: Server.remove_client_from_the_list(),
         "netcat":   Network_Services_MixIn.netcat(),
         "dns":      Network_Services_MixIn.dns(),
@@ -74,6 +74,27 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
             connection.close()
             del self._clients_list[client_address]
 
+    def private_message():
+        return "Command not avaliable yet"
+    
+    def broadcast_message():
+        return "Command not avaliable yet"
+
+    def command_list():
+        commands = ['/f - Files on the server',
+                    '/d - Download from the server',
+                    '/u - Upload to the server',
+                    '/m - Private message',
+                    '/b - Broadcast message',
+                    '/q - Log out',
+                    '/netcat'
+                    'dns',
+                    'portscan'
+                    ]
+        return Server.convert_to_string(commands)
+
+    def convert_to_string(data):
+        return '|'.join(data)
     
 if __name__ == '__main__':
     server = Server()
