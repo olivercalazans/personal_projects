@@ -1,12 +1,4 @@
-import os
-
 class Server_Services_MixIn:
-    def create_directory(directory):
-        try:   os.mkdir(directory)
-        except FileExistsError: print('The directory already exist')
-        except Exception as error: print(f'{error}')
-        else:  print(f'Directory created')
-    
     def convert_to_string(data):
         return '|'.join(data)
 
