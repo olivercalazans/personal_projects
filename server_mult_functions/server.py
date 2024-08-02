@@ -2,10 +2,11 @@ import socket, threading, os, platform
 from server_services import *
 from network_services import *
 
-class Server(Server_Services_MixIn):
+class Server(Server_Services_MixIn, Network_Services_MixIn):
     DIRECTORY  = os.path.dirname(os.path.abspath(__file__))
     if platform.system() == 'Windows': DIRECTORY += '\\storage\\'
     elif platform.system() == 'Linux': DIRECTORY += '/storage'
+
     FUNCTION_DICTIONARY = {
         "/?": Server_Services_MixIn.command_list(),
         "/f": Server_Services_MixIn.files_on_the_server(),
@@ -26,7 +27,13 @@ class Server(Server_Services_MixIn):
         print(f'\nTHE SERVER IS RUNNING: {self._server_socket.getsockname()}')
         self._clients_list = dict()
         self._lock         = threading.Lock()
-        Server_Services_MixIn.create_directory(Server.DIRECTORY)
+        Server.create_directory(Server.DIRECTORY)
+
+    def create_directory(directory):
+        try:   os.mkdir(directory)
+        except FileExistsError: print('The directory already exist')
+        except Exception as error: print(f'{error}')
+        else:  print(f'Directory created')
 
     def receive_client(self):
         while True:
