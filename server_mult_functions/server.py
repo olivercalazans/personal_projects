@@ -35,6 +35,9 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         except Exception as error: print(f'{error}')
         else:  print(f'Directory created')
 
+    def database():
+        return 'This will be implemented'
+
     def receive_client(self):
         while True:
             connection, client_address = self._server_socket.accept()
