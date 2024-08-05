@@ -9,15 +9,15 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
     elif platform.system() == 'Linux': DIRECTORY += '/storage'
 
     FUNCTION_DICTIONARY = {
-        "/f": lambda self, args=None: self.files_on_the_server(),
-        "/d": lambda self, args=None: self.send_file_to_client(),
-        "/u": lambda self, args=None: self.receive_file_from_client(),
-        "/?": lambda self, args=None: self.command_list(),
-        "/m": lambda self, args=None: self.private_message(),
-        "/b": lambda self, args=None: self.broadcast_message(),
-        "/q": lambda self, args=None: self.remove_client_from_the_list(self),
-        "/netcat": lambda self, args=None: self.netcat(),
-        "/dns": lambda self, args=None: self.dns(),
+        "/?":        lambda self, args=None: self.command_list(),
+        "/exit":     lambda self, args=None: self.remove_client_from_the_list(self),
+        "/files":    lambda self, args=None: self.files_on_the_server(),
+        "/downl":    lambda self, args=None: self.send_file_to_client(),
+        "/upl":      lambda self, args=None: self.receive_file_from_client(),
+        "/msg":      lambda self, args=None: self.private_message(),
+        "/bmsg":     lambda self, args=None: self.broadcast_message(),
+        "/netcat":   lambda self, args=None: self.netcat(),
+        "/dns":      lambda self, args=None: self.dns(),
         "/portscan": lambda self, args: self.portscan(args)
     }
 
@@ -90,15 +90,15 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         return "Command not available yet"
 
     def command_list(self):
-        commands = ['/f - Files on the server',
-                    '/d - Download from the server',
-                    '/u - Upload to the server',
-                    '/m - Private message',
-                    '/b - Broadcast message',
-                    '/q - Log out',
+        commands = ['/files - Files on the server',
+                    '/downl - Download from the server',
+                    '/upl - Upload to the server',
+                    '/msg - Private message',
+                    '/bmsg - Broadcast message',
+                    '/exit - Log out',
                     '/netcat',
                     '/dns',
-                    '/portscan'
+                    '/portscan - scan some ports of a server'
                     ]
         return Server.convert_to_string(commands)
 
