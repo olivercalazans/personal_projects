@@ -23,13 +23,13 @@ class Network_Services_MixIn:
         try:
             _data = list()
             for port in _ports.keys():
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(3) 
-                result = sock.connect_ex((_ip, port))
+                _portscan_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                _portscan_socket.settimeout(3) 
+                result = _portscan_socket.connect_ex((_ip, port))
                 status = 'Closed'
                 if result == 0: status = 'Opened'
                 _data.append(f' Port {port:>4} : {_ports[port]} (STATUS -> {status})')
-                sock.close()
+                _portscan_socket.close()
             return _data
         except socket.gaierror:
             return 'ERROR: problems with DNS'
