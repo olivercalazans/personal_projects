@@ -5,10 +5,8 @@ from network_services import *
 class Server(Server_Services_MixIn, Network_Services_MixIn):
     DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
-    if platform.system() == 'Windows':
-        DIRECTORY += '\\storage\\'
-    elif platform.system() == 'Linux':
-        DIRECTORY += '/storage'
+    if platform.system() == 'Windows': DIRECTORY += '\\storage\\'
+    elif platform.system() == 'Linux': DIRECTORY += '/storage'
 
     FUNCTION_DICTIONARY = {
         "/?":        lambda self, args=None: self.command_list(),
