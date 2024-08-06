@@ -73,6 +73,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
 
     def remove_client_from_the_list(self, connection, client_address) -> None:
         with self._lock:
+            Server.send_to_client(connection, '<close>')
             connection.close()
             del self._clients_list[client_address]
 
