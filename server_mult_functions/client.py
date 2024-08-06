@@ -7,13 +7,16 @@ class Client:
     elif platform.system() == 'Linux': DIRECTORY += '/client_folder'
 
     FUNCTION_DICTIONARY = {
-        "<close>": lambda self: self.logout()
+        "<close>":  lambda self, arguments=None: self.logout(),
+        "<server>": lambda self, arguments=None: self.print_messages_from_server(arguments) if arguments else 'Nothing',
+        "<client>": lambda self, arguments=None: self.print_messages_from_clients() if arguments else ' '
     }
 
     def __init__(self, ip='localhost', port=10000) -> None:
         self._connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._connection.connect((ip, port))
         self._stop_flag = False
+        Client.create_directory(Client.DIRECTORY)
         threading.Thread(target=Client.receive_from_server, args=(self,)).start()
 
     @staticmethod
@@ -23,26 +26,30 @@ class Client:
         except Exception as error: print(f'Error creating directory: {error}')
         else:  print('Directory created')
 
-    def sending_messages(self) -> None:
+    def send_messages(self) -> None:
         while not self._stop_flag:
             message = input('>')
             self._connection.sendall(message.encode())
-
-    @property
-    def logout(self) -> None:
-        self._stop_flag = True
 
     def receive_from_server(self) -> None:
         try:
             while not self._stop_flag:
                 data_from_server = self._connection.recv(1024).decode()
-                data_from_server = data_from_server.split('|')
-                for line in data_from_server:
-                    print(line)
         except:
             ...
 
+    @property
+    def logout(self) -> None:
+        self._stop_flag = True
+
+    def print_messages_from_server(_message):
+        _message = _message.split('|')
+        for line in _message:
+            print(line)
+    
+    def print_messages_from_clients():
+        ...
 
 if __name__ == '__main__':
     client = Client()
-    client.sending_messages()
+    client.send_messages()
