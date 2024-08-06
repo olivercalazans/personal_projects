@@ -1,28 +1,46 @@
-import socket, threading, sys
+import socket, threading, os, platform
 
 class Client:
-    def __init__(self, ip='localhost', port=10000):
+    DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+    if platform.system() == 'Windows': DIRECTORY += '\\client_folder\\'
+    elif platform.system() == 'Linux': DIRECTORY += '/client_folder'
+
+    FUNCTION_DICTIONARY = {
+        "<close>": lambda self: self.logout()
+    }
+
+    def __init__(self, ip='localhost', port=10000) -> None:
         self._connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._connection.connect((ip, port))
+        self._stop_flag = False
         threading.Thread(target=Client.receive_from_server, args=(self,)).start()
 
-    def sending_messages(self):
-        while True:
+    @staticmethod
+    def create_directory(_directory) -> None:
+        try:   os.mkdir(_directory)
+        except FileExistsError: print('The directory already exists')
+        except Exception as error: print(f'Error creating directory: {error}')
+        else:  print('Directory created')
+
+    def sending_messages(self) -> None:
+        while not self._stop_flag:
             message = input('>')
             self._connection.sendall(message.encode())
-            if message == '/q':
-                Client.closing_connection(self)
-                break
 
-    def closing_connection(self):
-        self._connection.close()
+    @property
+    def logout(self) -> None:
+        self._stop_flag = True
 
-    def receive_from_server(self):
-        while True:
-            data_from_server = self._connection.recv(1024).decode()
-            data_from_server = data_from_server.split('|')
-            for line in data_from_server:
-                print(line)
+    def receive_from_server(self) -> None:
+        try:
+            while not self._stop_flag:
+                data_from_server = self._connection.recv(1024).decode()
+                data_from_server = data_from_server.split('|')
+                for line in data_from_server:
+                    print(line)
+        except:
+            ...
 
 
 if __name__ == '__main__':
