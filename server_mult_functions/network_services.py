@@ -7,7 +7,7 @@ class Network_Services_MixIn:
     def dns():
         ...
     
-    def portscan(_host):
+    def portscan(_host) -> list:
         _ip = socket.gethostbyname(_host)
         _ports = { 21  : 'FTP - File Transfer Protocol',  
                    22  : 'SSH - Secure Shell',  
@@ -25,10 +25,10 @@ class Network_Services_MixIn:
             for port in _ports.keys():
                 _portscan_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 _portscan_socket.settimeout(3) 
-                result = _portscan_socket.connect_ex((_ip, port))
-                status = 'Closed'
-                if result == 0: status = 'Opened'
-                _data.append(f' Port {port:>4} : {_ports[port]} (STATUS -> {status})')
+                _result = _portscan_socket.connect_ex((_ip, port))
+                _status = 'Closed'
+                if _result == 0: _status = 'Opened'
+                _data.append(f' Port {port:>4} : {_ports[port]} (STATUS -> {_status})')
                 _portscan_socket.close()
             return _data
         except socket.gaierror:
