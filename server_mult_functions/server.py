@@ -28,7 +28,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         print(f'\nTHE SERVER IS RUNNING: {self._server_socket.getsockname()}')
         self._clients_list = dict()
         self._lock = threading.Lock()
-        Server.create_directory(Server.DIRECTORY)
+        self.create_directory(Server.DIRECTORY)
 
     @staticmethod
     def create_directory(_directory) -> None:
@@ -49,7 +49,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
 
     def remove_client_from_the_list(self, connection, client_address) -> None:
         with self._lock:
-            Server.send_to_client(connection, '<close>')
+            self.send_to_client(connection, '<close>')
             connection.close()
             del self._clients_list[client_address]
 
@@ -57,12 +57,12 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         self.add_client_to_the_list(connection, client_address)
         while True:
             try:
-                _function, _arguments = Server.separating_function_from_arguments((connection.recv(1024)).decode())
+                _function, _arguments = self.separating_function_from_arguments((connection.recv(1024)).decode())
                 if _function in Server.FUNCTION_DICTIONARY:
                     _result = Server.FUNCTION_DICTIONARY[_function](self, _arguments)
                 else:
                     _result = 'Command not found'
-                Server.send_to_client(connection, _result)
+                self.send_to_client(connection, _result)
             except Exception as error:
                 print('ERROR INSIDE THE LOOP')
                 print(error)
@@ -73,6 +73,19 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         _function_key, _args = (_string.split(':', 1) + [None])[:2]
         return _function_key, _args
     
+    @staticmethod
+    def add_flag_server(_data) -> str:
+        return f'<server>:{_data}'
+    
+    @staticmethod
+    def add_flag_users(_data) -> str:
+        return f'<users>:{_data}'
+    
+    @staticmethod
+    def convert_to_string(_data) -> str:
+        string = '|'.join(_data)
+        return Server.add_flag_server(string)
+
     @staticmethod
     def send_to_client(connection, result) -> None:
         connection.sendall(result.encode())
@@ -95,11 +108,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
             '/dns',
             '/portscan - Scan some ports of a server'
         ]
-        return Server.convert_to_string(commands)
-
-    @staticmethod
-    def convert_to_string(_data) -> str:
-        return '|'.join(_data)
+        return self.convert_to_string(commands)
 
 if __name__ == '__main__':
     server = Server()
