@@ -37,20 +37,21 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         except Exception as error: print(f'Error creating directory: {error}')
         else:  print('Directory created')
 
-    @staticmethod
-    def separating_function_from_arguments(_string) -> list:
-        _function_key, _args = (_string.split(':', 1) + [None])[:2]
-        return _function_key, _args
-
-    @staticmethod
-    def send_to_client(connection, result) -> None:
-        connection.sendall(result.encode())
-
     def receive_client(self) -> None:
         while True:
             connection, client_address = self._server_socket.accept()
             print(f'New log in: {client_address}')
             threading.Thread(target=self.handle_client, args=(connection, client_address)).start()
+
+    def add_client_to_the_list(self, connection, client_address) -> None:
+        with self._lock:
+            self._clients_list[client_address] = connection
+
+    def remove_client_from_the_list(self, connection, client_address) -> None:
+        with self._lock:
+            Server.send_to_client(connection, '<close>')
+            connection.close()
+            del self._clients_list[client_address]
 
     def handle_client(self, connection, client_address) -> None:
         self.add_client_to_the_list(connection, client_address)
@@ -66,16 +67,15 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
                 print('ERROR INSIDE THE LOOP')
                 print(error)
                 self.remove_client_from_the_list(connection, client_address)
-
-    def add_client_to_the_list(self, connection, client_address) -> None:
-        with self._lock:
-            self._clients_list[client_address] = connection
-
-    def remove_client_from_the_list(self, connection, client_address) -> None:
-        with self._lock:
-            Server.send_to_client(connection, '<close>')
-            connection.close()
-            del self._clients_list[client_address]
+    
+    @staticmethod
+    def separating_function_from_arguments(_string) -> list:
+        _function_key, _args = (_string.split(':', 1) + [None])[:2]
+        return _function_key, _args
+    
+    @staticmethod
+    def send_to_client(connection, result) -> None:
+        connection.sendall(result.encode())
 
     def private_message(self) -> None:
         return "Command not available yet"
