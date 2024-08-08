@@ -17,10 +17,10 @@ class Server_Services_MixIn:
         else:  print('Directory created')
 
     @staticmethod
-    def file_list_on_the_server() -> str:
+    def file_list_on_the_server() -> list:
         _file_list = os.listdir(Server_Services_MixIn.get_directory())
         _files_and_sizes = Server_Services_MixIn.process_large_file_list(_file_list)
-        return Server_Services_MixIn.convert_to_string(_files_and_sizes)
+        return _files_and_sizes
 
     @staticmethod
     def process_large_file_list(_file_names, _block_size=10) -> list:
