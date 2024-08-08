@@ -1,16 +1,11 @@
-import socket, threading, os, platform
+import socket, threading
 from server_services import *
 from network_services import *
 
 class Server(Server_Services_MixIn, Network_Services_MixIn):
-    DIRECTORY = os.path.dirname(os.path.abspath(__file__))
-
-    if platform.system() == 'Windows': DIRECTORY += '\\server_folder\\'
-    elif platform.system() == 'Linux': DIRECTORY += '/server_folder'
-
     FUNCTION_DICTIONARY = {
         "/?":        lambda self, arguments=None: self.command_list(),
-        "/exit":     lambda self, arguments=None: self.remove_client_from_the_list(),
+        "/exit":     lambda self, arguments=None: self.remove_client_from_the_list(arguments) if arguments else None,
         "/files":    lambda self, arguments=None: self.files_on_the_server(),
         "/downl":    lambda self, arguments=None: self.send_file_to_client(),
         "/upl":      lambda self, arguments=None: self.receive_file_from_client(),
@@ -21,6 +16,10 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         "/portscan": lambda self, arguments=None: self.portscan(arguments) if arguments else 'No host specified'
     }
 
+    FORWARDING_DICTIONARY = {
+        ""
+    }
+
     def __init__(self) -> None:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('localhost', 10000))
@@ -28,14 +27,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         print(f'\nTHE SERVER IS RUNNING: {self._server_socket.getsockname()}')
         self._clients_list = dict()
         self._lock = threading.Lock()
-        self.create_directory(Server.DIRECTORY)
-
-    @staticmethod
-    def create_directory(_directory) -> None:
-        try:   os.mkdir(_directory)
-        except FileExistsError: print('The directory already exists')
-        except Exception as error: print(f'Error creating directory: {error}')
-        else:  print('Directory created')
+        self.create_directory(Server_Services_MixIn.DIRECTORY)
 
     def receive_client(self) -> None:
         while True:
@@ -47,26 +39,35 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         with self._lock:
             self._clients_list[client_address] = connection
 
-    def remove_client_from_the_list(self, connection, client_address) -> None:
+    def remove_client_from_the_list(self, client_address) -> None:
         with self._lock:
-            self.send_to_client(connection, '<close>')
-            connection.close()
             del self._clients_list[client_address]
+    
+    def close_connection(self, connection, client_address) -> None:
+        self.send_to_client(connection, '<close>')
+        self.remove_client_from_the_list(client_address)
+        connection.close()
 
     def handle_client(self, connection, client_address) -> None:
         self.add_client_to_the_list(connection, client_address)
         while True:
             try:
                 _function, _arguments = self.separating_function_from_arguments((connection.recv(1024)).decode())
-                if _function in Server.FUNCTION_DICTIONARY:
+                if _function == '/exit':
+                    self.close_connection(connection, client_address)
+                    continue
+                elif _function in Server.FUNCTION_DICTIONARY:
                     _result = Server.FUNCTION_DICTIONARY[_function](self, _arguments)
                 else:
-                    _result = 'Command not found'
+                    _result = self.add_server_flag('Command not found')
+                print(f'{client_address}> {_function}')
                 self.send_to_client(connection, _result)
+            except ConnectionResetError:
+                print('The client logout abruptly')
+                self.remove_client_from_the_list(client_address)
             except Exception as error:
-                print('ERROR INSIDE THE LOOP')
                 print(error)
-                self.remove_client_from_the_list(connection, client_address)
+                self.remove_client_from_the_list(client_address)
     
     @staticmethod
     def separating_function_from_arguments(_string) -> list:
@@ -74,17 +75,17 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         return _function_key, _args
     
     @staticmethod
-    def add_flag_server(_data) -> str:
+    def add_server_flag(_data) -> str:
         return f'<server>:{_data}'
     
     @staticmethod
-    def add_flag_users(_data) -> str:
+    def add_users_flag(_data) -> str:
         return f'<users>:{_data}'
     
     @staticmethod
     def convert_to_string(_data) -> str:
-        string = '|'.join(_data)
-        return Server.add_flag_server(string)
+        string = '|'.join(map(str, _data))
+        return Server.add_server_flag(string)
 
     @staticmethod
     def send_to_client(connection, result) -> None:
@@ -97,7 +98,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         return "Command not available yet"
 
     def command_list(self) -> str:
-        commands = [
+        commands = (
             '/files - Files on the server',
             '/downl - Download from the server',
             '/upl - Upload to the server',
@@ -107,7 +108,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
             '/netcat',
             '/dns',
             '/portscan - Scan some ports of a server'
-        ]
+        )
         return self.convert_to_string(commands)
 
 if __name__ == '__main__':
