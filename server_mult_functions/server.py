@@ -18,7 +18,8 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
 
     FORWARDING_DICTIONARY = {
         "svc": lambda self, *args: self.send_order(*args) if args else '',
-        "msg": lambda self, *args: self.command_list(*args) if args else ''
+        "pvt": lambda self, *args: self.send_private_message(*args) if args else '',
+        "bdc": lambda self, *args: self.send_broadcast_message(*args) if args else ''
     }
 
     def __init__(self) -> None:
@@ -57,12 +58,12 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
                 if _function == '/exit':
                     self.close_connection(connection, client_address)
                     continue
-                elif _function in Server.FUNCTION_DICTIONARY:
-                    _forward_flag, _data = Server.FUNCTION_DICTIONARY[_function](self, _arguments)
+                elif _function in self.get_function_dictionary():
+                    _forward_flag, _data = self.get_function_dictionary()[_function](self, _arguments)
                 else:
                     _forward_flag, _data = self.add_server_flags('Command not found')
                 print(f'{client_address}> {_function}')
-                Server.FORWARDING_DICTIONARY[_forward_flag](self, connection, _data)
+                self.get_forward_dictionary()[_forward_flag](self, connection, _data)
             except ConnectionResetError:
                 print('The client logout abruptly')
                 self.remove_client_from_the_list(client_address)
@@ -80,8 +81,20 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         return 'svc', f'<server>:{_data}'
     
     @staticmethod
-    def add_users_flags(_data) -> str:
-        return 'msg', f'<users>:{_data}'
+    def add_private_message_flags(_data) -> str:
+        return 'pvt', f'<users>:{_data}'
+    
+    @staticmethod
+    def add_broadcast_message_flags(_data) -> str:
+        return 'bdc', f'<users>:{_data}'
+    
+    @classmethod
+    def get_function_dictionary(cls):
+        return cls.FUNCTION_DICTIONARY
+
+    @classmethod
+    def get_forward_dictionary(cls):
+        return cls.FORWARDING_DICTIONARY
     
     @staticmethod
     def convert_to_string(_data) -> str:
@@ -93,7 +106,11 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         connection.sendall(_result.encode())
     
     @staticmethod
-    def send_message(connection, _message) -> None:
+    def send_private_message(connection, _message) -> None:
+        connection.sendall(_message.encode())
+
+    @staticmethod
+    def send_broadcast_message(connection, _message) -> None:
         connection.sendall(_message.encode())
 
     def private_message(self) -> None:
