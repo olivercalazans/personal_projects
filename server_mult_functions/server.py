@@ -17,7 +17,8 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
     }
 
     FORWARDING_DICTIONARY = {
-        ""
+        "svc": lambda self, *args: self.send_order(*args) if args else '',
+        "msg": lambda self, *args: self.command_list(*args) if args else ''
     }
 
     def __init__(self) -> None:
@@ -44,7 +45,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
             del self._clients_list[client_address]
     
     def close_connection(self, connection, client_address) -> None:
-        self.send_to_client(connection, '<close>')
+        self.send_order(connection, '<close>')
         self.remove_client_from_the_list(client_address)
         connection.close()
 
@@ -57,11 +58,11 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
                     self.close_connection(connection, client_address)
                     continue
                 elif _function in Server.FUNCTION_DICTIONARY:
-                    _result = Server.FUNCTION_DICTIONARY[_function](self, _arguments)
+                    _forward_flag, _data = Server.FUNCTION_DICTIONARY[_function](self, _arguments)
                 else:
-                    _result = self.add_server_flag('Command not found')
+                    _forward_flag, _data = self.add_server_flags('Command not found')
                 print(f'{client_address}> {_function}')
-                self.send_to_client(connection, _result)
+                Server.FORWARDING_DICTIONARY[_forward_flag](self, connection, _data)
             except ConnectionResetError:
                 print('The client logout abruptly')
                 self.remove_client_from_the_list(client_address)
@@ -75,21 +76,25 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
         return _function_key, _args
     
     @staticmethod
-    def add_server_flag(_data) -> str:
-        return f'<server>:{_data}'
+    def add_server_flags(_data) -> str:
+        return 'svc', f'<server>:{_data}'
     
     @staticmethod
-    def add_users_flag(_data) -> str:
-        return f'<users>:{_data}'
+    def add_users_flags(_data) -> str:
+        return 'msg', f'<users>:{_data}'
     
     @staticmethod
     def convert_to_string(_data) -> str:
         string = '|'.join(map(str, _data))
-        return Server.add_server_flag(string)
+        return Server.add_server_flags(string)
 
     @staticmethod
-    def send_to_client(connection, result) -> None:
-        connection.sendall(result.encode())
+    def send_order(connection, _result) -> None:
+        connection.sendall(_result.encode())
+    
+    @staticmethod
+    def send_message(connection, _message) -> None:
+        connection.sendall(_message.encode())
 
     def private_message(self) -> None:
         return "Command not available yet"
