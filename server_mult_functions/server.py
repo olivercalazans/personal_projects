@@ -6,7 +6,7 @@ class Server(Server_Services_MixIn, Network_Services_MixIn):
     FUNCTION_DICTIONARY = {
         "/?":        lambda self, arguments=None: self.command_list(),
         "/exit":     lambda self, arguments=None: self.remove_client_from_the_list(arguments) if arguments else None,
-        "/files":    lambda self, arguments=None: self.files_on_the_server(),
+        "/files":    lambda self, arguments=None: self.file_list_on_the_server(),
         "/downl":    lambda self, arguments=None: self.send_file_to_client(),
         "/upl":      lambda self, arguments=None: self.receive_file_from_client(),
         "/msg":      lambda self, arguments=None: self.private_message(),
