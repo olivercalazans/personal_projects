@@ -1,4 +1,4 @@
-import socket, threading, os, platform, time
+import socket, threading, os, platform, time, sys
 
 class Client:
     DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -58,6 +58,10 @@ class Client:
     @staticmethod
     def users_messages(_message) -> list:
         return list(_message)
+    
+    def logout(self):
+        self.stop_thread()
+        sys.exit()
     
 if __name__ == '__main__':
     client = Client()
